@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #24221f;
+  background: #fbf7ef;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(250, 204, 21, 0.08), transparent 32rem),
+    linear-gradient(45deg, rgba(122, 163, 111, 0.1), transparent 28rem),
+    #fbf7ef;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  display: block;
+}
+
+@layer components {
+  .k-card {
+    @apply rounded-lg border border-stone-200/80 bg-kitchen-paper shadow-soft;
+  }
+
+  .k-input {
+    @apply w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-kitchen-ink outline-none transition focus:border-kitchen-orange focus:ring-2 focus:ring-orange-100;
+  }
+
+  .k-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition active:scale-[0.99];
+  }
+
+  .k-button-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-kitchen-orange px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 active:scale-[0.99];
+  }
+
+  .k-button-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-kitchen-ink transition hover:border-stone-300 hover:bg-stone-50 active:scale-[0.99];
+  }
+
+  .k-button-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-kitchen-muted transition hover:bg-stone-100 hover:text-kitchen-ink active:scale-[0.99];
+  }
+}
