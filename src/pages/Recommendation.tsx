@@ -128,7 +128,7 @@ function RecommendationDetail({
   detail,
 }: {
   item: RecommendationItem;
-  detail: ReturnType<typeof findRecommendationDetail>;
+  detail: ReturnType<typeof findRecommendationDetail> | null;
 }) {
   const publicDetail = item.source === "public" ? (detail as PublicRecipe | undefined) : null;
   const recipeLike = item.source === "recipe" ? (detail as Recipe | undefined) : null;

@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 import type { WishlistDraft, WishlistItem } from "../../data/types";
 
+type CravingLevel = WishlistDraft["cravingLevel"];
+
 interface WishlistFormProps {
   initial?: WishlistItem;
   onSubmit: (draft: WishlistDraft) => void;
@@ -18,7 +20,7 @@ export function WishlistForm({ initial, onSubmit, onCancel }: WishlistFormProps)
   const [image, setImage] = useState(initial?.image ?? "");
   const [sourceUrl, setSourceUrl] = useState(initial?.sourceUrl ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
-  const [cravingLevel, setCravingLevel] = useState(initial?.cravingLevel ?? 3);
+  const [cravingLevel, setCravingLevel] = useState<CravingLevel>(initial?.cravingLevel ?? 3);
   const [tags, setTags] = useState(initial?.tags.join("，") ?? "");
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -55,7 +57,7 @@ export function WishlistForm({ initial, onSubmit, onCancel }: WishlistFormProps)
           min="1"
           type="range"
           value={cravingLevel}
-          onChange={(event) => setCravingLevel(Number(event.target.value))}
+          onChange={(event) => setCravingLevel(Number(event.target.value) as CravingLevel)}
         />
       </label>
       <label className="block">
