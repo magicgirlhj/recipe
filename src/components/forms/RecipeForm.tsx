@@ -22,6 +22,7 @@ export function RecipeForm({ initial, onSubmit, onCancel }: RecipeFormProps) {
     initial?.ingredients.length ? initial.ingredients : [{ name: "", amount: "" }],
   );
   const [steps, setSteps] = useState<string[]>(initial?.steps.length ? initial.steps : [""]);
+  const [cookingMethod, setCookingMethod] = useState(initial?.cookingMethod ?? "");
   const [cookingTime, setCookingTime] = useState(initial?.cookingTime?.toString() ?? "");
   const [difficulty, setDifficulty] = useState<RecipeDifficulty>(initial?.difficulty ?? "easy");
   const [notes, setNotes] = useState(initial?.notes ?? "");
@@ -39,6 +40,7 @@ export function RecipeForm({ initial, onSubmit, onCancel }: RecipeFormProps) {
       tags: splitTags(tags),
       ingredients: cleanIngredients.length ? cleanIngredients : [{ name: "待补充" }],
       steps: cleanSteps.length ? cleanSteps : ["待补充做法"],
+      cookingMethod: cookingMethod.trim() || undefined,
       cookingTime: cookingTime ? Number(cookingTime) : undefined,
       difficulty,
       notes: notes.trim() || undefined,
@@ -63,6 +65,15 @@ export function RecipeForm({ initial, onSubmit, onCancel }: RecipeFormProps) {
         <label className="block sm:col-span-2">
           <span className="mb-1 block text-sm font-bold">标签</span>
           <input className="k-input" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="早餐，快手菜，中餐" />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-bold">烹饪方式</span>
+          <input
+            className="k-input"
+            value={cookingMethod}
+            onChange={(event) => setCookingMethod(event.target.value)}
+            placeholder="炒 / 煎 / 炖 / 烤 / 蒸"
+          />
         </label>
         <label className="block">
           <span className="mb-1 block text-sm font-bold">制作时间</span>

@@ -16,6 +16,7 @@ export interface Recipe {
   tags: string[];
   ingredients: Ingredient[];
   steps: string[];
+  cookingMethod?: string;
   cookingTime?: number;
   difficulty?: RecipeDifficulty;
   notes?: string;
@@ -31,6 +32,7 @@ export interface RecipeDraft {
   tags: string[];
   ingredients: Ingredient[];
   steps: string[];
+  cookingMethod?: string;
   cookingTime?: number;
   difficulty?: RecipeDifficulty;
   notes?: string;

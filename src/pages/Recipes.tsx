@@ -1,4 +1,4 @@
-import { BookOpen, CalendarClock, ChefHat, Clock3, Plus, Search, Trash2, type LucideIcon } from "lucide-react";
+import { BookOpen, CalendarClock, ChefHat, Clock3, Flame, Plus, Search, Trash2, type LucideIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EmptyState } from "../components/EmptyState";
@@ -155,8 +155,9 @@ function RecipeDetail({
         ))}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <DetailMetric icon={Clock3} label="制作时间" value={recipe.cookingTime ? `${recipe.cookingTime} 分钟` : "未填写"} />
+        <DetailMetric icon={Flame} label="烹饪方式" value={recipe.cookingMethod || "未填写"} />
         <DetailMetric icon={ChefHat} label="难度" value={recipe.difficulty ? difficultyLabel[recipe.difficulty] : "未填写"} />
         <DetailMetric icon={BookOpen} label="做过次数" value={`${recipe.cookedCount} 次`} />
         <DetailMetric icon={CalendarClock} label="最近做过" value={formatDate(recipe.lastCookedAt)} />
