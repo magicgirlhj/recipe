@@ -53,8 +53,8 @@ export function Layout() {
         </nav>
       </aside>
 
-      <main className="mx-auto min-h-screen max-w-7xl px-4 pb-24 pt-5 sm:px-6 lg:ml-64 lg:px-8 lg:pb-8">
-        <div className="mx-auto max-w-6xl">
+      <main className="min-h-screen pb-24 pt-5 lg:pl-64 lg:pb-10 lg:pt-8">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10 xl:px-12">
           <Outlet />
         </div>
       </main>
