@@ -1,6 +1,7 @@
-import { AlertTriangle, CheckCircle2, MapPin, Package, Snowflake, Thermometer } from "lucide-react";
+import { AlertTriangle, CalendarPlus, CheckCircle2, MapPin, Package, Snowflake, Thermometer } from "lucide-react";
 import type { InventoryItem } from "../data/types";
-import { daysUntil, expiryLabel } from "../utils/date";
+import { daysUntil, expiryLabel, formatDate } from "../utils/date";
+import { FoodIcon } from "./FoodIcon";
 
 interface InventoryCardProps {
   item: InventoryItem;
@@ -31,9 +32,10 @@ export function InventoryCard({ item, onClick }: InventoryCardProps) {
       ].join(" ")}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-black">{item.name}</h3>
+      <div className="flex items-start gap-3">
+        <FoodIcon iconKey={item.iconKey} name={item.name} category={item.category} className="h-16 w-16 p-1.5" />
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-lg font-black">{item.name}</h3>
           <p className="mt-1 text-sm font-semibold text-kitchen-muted">
             {item.quantity ?? "-"} {item.unit || ""} {item.category ? `· ${item.category}` : ""}
           </p>
@@ -56,6 +58,10 @@ export function InventoryCard({ item, onClick }: InventoryCardProps) {
         <span className="inline-flex items-center gap-1 rounded-md bg-white/75 px-2 py-1">
           <MapPin size={13} />
           {expiryLabel(item.expireDate)}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-md bg-white/75 px-2 py-1">
+          <CalendarPlus size={13} />
+          入库 {formatDate(item.createdAt)}
         </span>
       </div>
     </button>

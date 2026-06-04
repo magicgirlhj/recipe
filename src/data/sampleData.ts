@@ -124,6 +124,7 @@ export const sampleInventory: InventoryItem[] = [
   {
     id: "inv-eggs",
     name: "鸡蛋",
+    iconKey: "egg",
     quantity: 8,
     unit: "个",
     category: "蛋奶",
@@ -136,6 +137,7 @@ export const sampleInventory: InventoryItem[] = [
   {
     id: "inv-tomato",
     name: "番茄",
+    iconKey: "tomato",
     quantity: 4,
     unit: "个",
     category: "蔬菜",
@@ -147,6 +149,7 @@ export const sampleInventory: InventoryItem[] = [
   {
     id: "inv-chicken",
     name: "鸡胸肉",
+    iconKey: "chicken-breast",
     quantity: 2,
     unit: "块",
     category: "肉类",
@@ -158,6 +161,7 @@ export const sampleInventory: InventoryItem[] = [
   {
     id: "inv-potato",
     name: "土豆",
+    iconKey: "potato",
     quantity: 3,
     unit: "个",
     category: "蔬菜",
@@ -169,6 +173,7 @@ export const sampleInventory: InventoryItem[] = [
   {
     id: "inv-broccoli",
     name: "西兰花",
+    iconKey: "broccoli",
     quantity: 1,
     unit: "颗",
     category: "蔬菜",

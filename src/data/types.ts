@@ -62,6 +62,7 @@ export interface WishlistDraft {
 export interface InventoryItem {
   id: string;
   name: string;
+  iconKey?: string;
   quantity?: number;
   unit?: string;
   category?: string;
@@ -74,6 +75,7 @@ export interface InventoryItem {
 
 export interface InventoryDraft {
   name: string;
+  iconKey?: string;
   quantity?: number;
   unit?: string;
   category?: string;

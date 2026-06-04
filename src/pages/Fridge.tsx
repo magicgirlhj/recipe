@@ -2,6 +2,7 @@ import { Plus, Refrigerator, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EmptyState } from "../components/EmptyState";
+import { FoodIcon } from "../components/FoodIcon";
 import { InventoryCard, locationLabel } from "../components/InventoryCard";
 import { Modal } from "../components/Modal";
 import { PageHeader } from "../components/PageHeader";
@@ -149,13 +150,22 @@ function InventoryDetail({
 }) {
   return (
     <div>
+      <section className="mb-4 flex items-center gap-4 rounded-lg bg-white p-4">
+        <FoodIcon iconKey={item.iconKey} name={item.name} category={item.category} className="h-20 w-20 p-2" />
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-kitchen-muted">食材名称</p>
+          <h3 className="truncate text-2xl font-black">{item.name}</h3>
+          <p className="mt-1 text-sm font-semibold text-kitchen-muted">放入时间：{fullDate(item.createdAt)}</p>
+        </div>
+      </section>
+
       <div className="grid gap-3 sm:grid-cols-2">
         <Detail label="数量" value={`${item.quantity ?? "-"} ${item.unit ?? ""}`} />
         <Detail label="分类" value={item.category || "未填写"} />
         <Detail label="存放位置" value={locationLabel(item.location)} />
         <Detail label="过期状态" value={expiryLabel(item.expireDate)} />
         <Detail label="过期日期" value={item.expireDate ? fullDate(item.expireDate) : "未设置"} />
-        <Detail label="创建时间" value={fullDate(item.createdAt)} />
+        <Detail label="放入时间" value={fullDate(item.createdAt)} />
       </div>
 
       {item.notes ? (
