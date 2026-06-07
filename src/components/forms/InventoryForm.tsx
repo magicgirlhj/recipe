@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { FoodIcon } from "../FoodIcon";
 import { foodIconOptions, matchFoodIconByName, resolveFoodIcon, type FoodIconOption } from "../../data/foodIcons";
 import type { InventoryDraft, InventoryItem, InventoryLocation } from "../../data/types";
+import { daysBetweenDates } from "../../utils/date";
 
 interface InventoryFormProps {
   initial?: InventoryItem;
@@ -13,13 +14,14 @@ export function InventoryForm({ initial, onSubmit, onCancel }: InventoryFormProp
   const [name, setName] = useState(initial?.name ?? "");
   const [iconKey, setIconKey] = useState(initial?.iconKey ?? matchFoodIconByName(initial?.name)?.key ?? "");
   const [manualIcon, setManualIcon] = useState(Boolean(initial?.iconKey));
-  const [quantity, setQuantity] = useState(initial?.quantity?.toString() ?? "");
+  const [quantity, setQuantity] = useState(initial?.quantity?.toString() ?? "1");
   const [unit, setUnit] = useState(initial?.unit ?? "");
-  const [category, setCategory] = useState(initial?.category ?? "");
   const [location, setLocation] = useState<InventoryLocation>(initial?.location ?? "fridge");
-  const [expireDate, setExpireDate] = useState(initial?.expireDate ?? "");
+  const [shelfLifeDays, setShelfLifeDays] = useState(
+    (initial?.shelfLifeDays ?? daysBetweenDates(initial?.createdAt, initial?.expireDate) ?? 7).toString(),
+  );
   const [notes, setNotes] = useState(initial?.notes ?? "");
-  const selectedIcon = resolveFoodIcon({ iconKey, name, category });
+  const selectedIcon = resolveFoodIcon({ iconKey, name });
 
   useEffect(() => {
     if (manualIcon) return;
@@ -30,7 +32,6 @@ export function InventoryForm({ initial, onSubmit, onCancel }: InventoryFormProp
     setIconKey(option.key);
     setManualIcon(true);
     if (!name.trim()) setName(option.label);
-    if (!category.trim()) setCategory(option.category);
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -40,11 +41,12 @@ export function InventoryForm({ initial, onSubmit, onCancel }: InventoryFormProp
     onSubmit({
       name: name.trim(),
       iconKey: matchedIcon || undefined,
-      quantity: quantity ? Number(quantity) : undefined,
+      quantity: quantity ? Number(quantity) : 1,
       unit: unit.trim() || undefined,
-      category: category.trim() || undefined,
+      category: undefined,
       location,
-      expireDate: expireDate || undefined,
+      shelfLifeDays: shelfLifeDays ? Number(shelfLifeDays) : undefined,
+      expireDate: undefined,
       notes: notes.trim() || undefined,
     });
   }
@@ -66,7 +68,7 @@ export function InventoryForm({ initial, onSubmit, onCancel }: InventoryFormProp
         </label>
         <div>
           <span className="mb-1 block text-sm font-bold">图标</span>
-          <FoodIcon iconKey={iconKey} name={name} category={category} className="h-12 w-12 p-1.5 sm:h-[42px] sm:w-[42px]" />
+          <FoodIcon iconKey={iconKey} name={name} className="h-12 w-12 p-1.5 sm:h-[42px] sm:w-[42px]" />
         </div>
       </div>
 
@@ -85,7 +87,7 @@ export function InventoryForm({ initial, onSubmit, onCancel }: InventoryFormProp
                 selectedIcon.key === option.key ? "border-kitchen-orange ring-2 ring-orange-100" : "border-stone-200",
               ].join(" ")}
               onClick={() => chooseIcon(option)}
-              title={`${option.label} · ${option.category}`}
+              title={option.label}
               aria-label={`选择${option.label}图标`}
             >
               <img src={option.src} alt="" className="h-full w-full object-contain k-pixel-image" draggable={false} />
@@ -104,10 +106,6 @@ export function InventoryForm({ initial, onSubmit, onCancel }: InventoryFormProp
           <input className="k-input" value={unit} onChange={(event) => setUnit(event.target.value)} placeholder="个 / g / 包" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-bold">分类</span>
-          <input className="k-input" value={category} onChange={(event) => setCategory(event.target.value)} placeholder="蔬菜 / 肉类" />
-        </label>
-        <label className="block">
           <span className="mb-1 block text-sm font-bold">存放位置</span>
           <select className="k-input" value={location} onChange={(event) => setLocation(event.target.value as InventoryLocation)}>
             <option value="fridge">冷藏</option>
@@ -115,11 +113,19 @@ export function InventoryForm({ initial, onSubmit, onCancel }: InventoryFormProp
             <option value="pantry">常温</option>
           </select>
         </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-bold">多久过期（天）</span>
+          <input
+            className="k-input"
+            min="0"
+            step="1"
+            type="number"
+            value={shelfLifeDays}
+            onChange={(event) => setShelfLifeDays(event.target.value)}
+            placeholder="例如 7"
+          />
+        </label>
       </div>
-      <label className="block">
-        <span className="mb-1 block text-sm font-bold">过期日期</span>
-        <input className="k-input" type="date" value={expireDate} onChange={(event) => setExpireDate(event.target.value)} />
-      </label>
       <label className="block">
         <span className="mb-1 block text-sm font-bold">备注</span>
         <textarea className="k-input min-h-24" value={notes} onChange={(event) => setNotes(event.target.value)} />

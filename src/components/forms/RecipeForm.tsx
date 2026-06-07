@@ -64,7 +64,7 @@ export function RecipeForm({ initial, onSubmit, onCancel }: RecipeFormProps) {
         </label>
         <label className="block sm:col-span-2">
           <span className="mb-1 block text-sm font-bold">标签</span>
-          <input className="k-input" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="早餐，快手菜，中餐" />
+          <input className="k-input" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="自由填写，用逗号分隔，例如：一人食，少油，便当" />
         </label>
         <label className="block">
           <span className="mb-1 block text-sm font-bold">烹饪方式</span>

@@ -1,5 +1,5 @@
 import { BookOpen, CalendarClock, ChefHat, Clock3, Flame, Plus, Search, Trash2, type LucideIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EmptyState } from "../components/EmptyState";
 import { Modal } from "../components/Modal";
@@ -12,8 +12,6 @@ import { useKitchen } from "../context/KitchenContext";
 import type { Recipe } from "../data/types";
 import { formatDate, fullDate } from "../utils/date";
 
-const tagFilters = ["全部", "早餐", "午餐", "晚餐", "快手菜", "减脂", "高蛋白", "中餐", "日料", "韩餐"] as const;
-
 const difficultyLabel = {
   easy: "简单",
   medium: "适中",
@@ -23,7 +21,7 @@ const difficultyLabel = {
 export function Recipes() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe, markCooked } = useKitchen();
   const [search, setSearch] = useState("");
-  const [tag, setTag] = useState<(typeof tagFilters)[number]>("全部");
+  const [tag, setTag] = useState("全部");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -31,6 +29,21 @@ export function Recipes() {
 
   const selectedRecipe = recipes.find((recipe) => recipe.id === selectedId) ?? null;
   const editingRecipe = recipes.find((recipe) => recipe.id === editingId) ?? null;
+
+  const tagFilters = useMemo(() => {
+    const customTags = recipes
+      .flatMap((recipe) => recipe.tags)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    return ["全部", ...Array.from(new Set(customTags))];
+  }, [recipes]);
+
+  useEffect(() => {
+    if (tag !== "全部" && !tagFilters.includes(tag)) {
+      setTag("全部");
+    }
+  }, [tag, tagFilters]);
 
   const filteredRecipes = useMemo(() => {
     const query = search.trim().toLowerCase();

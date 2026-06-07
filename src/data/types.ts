@@ -67,6 +67,7 @@ export interface InventoryItem {
   unit?: string;
   category?: string;
   location: InventoryLocation;
+  shelfLifeDays?: number;
   expireDate?: string;
   notes?: string;
   createdAt: string;
@@ -80,6 +81,7 @@ export interface InventoryDraft {
   unit?: string;
   category?: string;
   location: InventoryLocation;
+  shelfLifeDays?: number;
   expireDate?: string;
   notes?: string;
 }

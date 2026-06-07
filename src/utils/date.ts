@@ -19,6 +19,29 @@ export function todayISO() {
   return new Date().toISOString();
 }
 
+function localDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function addDaysToDateString(value: string, days: number) {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  return localDateString(date);
+}
+
+export function daysBetweenDates(start?: string, end?: string) {
+  if (!start || !end) return undefined;
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+  return Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export function daysUntil(dateString?: string) {
   if (!dateString) return undefined;
   const target = new Date(dateString);

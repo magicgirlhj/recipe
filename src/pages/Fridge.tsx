@@ -14,7 +14,7 @@ import { daysUntil, expiryLabel, fullDate } from "../utils/date";
 const locations: InventoryLocation[] = ["fridge", "freezer", "pantry"];
 
 export function Fridge() {
-  const { inventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useKitchen();
+  const { inventory, addInventoryItem, updateInventoryItem, adjustInventoryQuantity, deleteInventoryItem } = useKitchen();
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function Fridge() {
   const sortedInventory = useMemo(() => {
     const query = search.trim().toLowerCase();
     return [...inventory]
-      .filter((item) => [item.name, item.category ?? "", item.notes ?? ""].join(" ").toLowerCase().includes(query))
+      .filter((item) => [item.name, item.notes ?? ""].join(" ").toLowerCase().includes(query))
       .sort((a, b) => (daysUntil(a.expireDate) ?? 999) - (daysUntil(b.expireDate) ?? 999));
   }, [inventory, search]);
 
@@ -55,7 +55,7 @@ export function Fridge() {
           className="k-input pl-10"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="搜索食材、分类、备注"
+          placeholder="搜索食材、备注"
         />
       </label>
 
@@ -64,7 +64,13 @@ export function Fridge() {
           <h2 className="mb-3 text-xl font-black">快过期和已过期</h2>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {urgentItems.map((item) => (
-              <InventoryCard key={item.id} item={item} onClick={() => setSelectedId(item.id)} />
+              <InventoryCard
+                key={item.id}
+                item={item}
+                onClick={() => setSelectedId(item.id)}
+                onDecrement={() => adjustInventoryQuantity(item.id, -1)}
+                onIncrement={() => adjustInventoryQuantity(item.id, 1)}
+              />
             ))}
           </div>
         </section>
@@ -80,7 +86,13 @@ export function Fridge() {
                 <h2 className="mb-3 text-xl font-black">{locationLabel(location)}</h2>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {items.map((item) => (
-                    <InventoryCard key={item.id} item={item} onClick={() => setSelectedId(item.id)} />
+                    <InventoryCard
+                      key={item.id}
+                      item={item}
+                      onClick={() => setSelectedId(item.id)}
+                      onDecrement={() => adjustInventoryQuantity(item.id, -1)}
+                      onIncrement={() => adjustInventoryQuantity(item.id, 1)}
+                    />
                   ))}
                 </div>
               </section>
@@ -151,7 +163,7 @@ function InventoryDetail({
   return (
     <div>
       <section className="mb-4 flex items-center gap-4 rounded-lg bg-white p-4">
-        <FoodIcon iconKey={item.iconKey} name={item.name} category={item.category} className="h-20 w-20 p-2" />
+        <FoodIcon iconKey={item.iconKey} name={item.name} className="h-20 w-20 p-2" />
         <div className="min-w-0">
           <p className="text-xs font-semibold text-kitchen-muted">食材名称</p>
           <h3 className="truncate text-2xl font-black">{item.name}</h3>
@@ -160,11 +172,11 @@ function InventoryDetail({
       </section>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Detail label="数量" value={`${item.quantity ?? "-"} ${item.unit ?? ""}`} />
-        <Detail label="分类" value={item.category || "未填写"} />
+        <Detail label="数量" value={`${item.quantity ?? 1} ${item.unit ?? ""}`} />
         <Detail label="存放位置" value={locationLabel(item.location)} />
+        <Detail label="保质天数" value={item.shelfLifeDays !== undefined ? `${item.shelfLifeDays} 天` : "未设置"} />
         <Detail label="过期状态" value={expiryLabel(item.expireDate)} />
-        <Detail label="过期日期" value={item.expireDate ? fullDate(item.expireDate) : "未设置"} />
+        <Detail label="推算过期日期" value={item.expireDate ? fullDate(item.expireDate) : "未设置"} />
         <Detail label="放入时间" value={fullDate(item.createdAt)} />
       </div>
 

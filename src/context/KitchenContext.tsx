@@ -10,7 +10,7 @@ import type {
   WishlistItem,
 } from "../data/types";
 import { readCollection, storageKeys, writeCollection } from "../utils/storage";
-import { todayISO } from "../utils/date";
+import { addDaysToDateString, todayISO } from "../utils/date";
 
 interface KitchenContextValue {
   recipes: Recipe[];
@@ -26,6 +26,7 @@ interface KitchenContextValue {
   convertWishlistToRecipe: (id: string) => Recipe | undefined;
   addInventoryItem: (draft: InventoryDraft) => InventoryItem;
   updateInventoryItem: (id: string, draft: InventoryDraft) => void;
+  adjustInventoryQuantity: (id: string, delta: number) => void;
   deleteInventoryItem: (id: string) => void;
   resetDemoData: () => void;
 }
@@ -131,9 +132,14 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       },
       addInventoryItem(draft) {
         const now = todayISO();
+        const expireDate =
+          draft.shelfLifeDays !== undefined ? addDaysToDateString(now, draft.shelfLifeDays) : draft.expireDate;
         const item: InventoryItem = {
           ...draft,
           id: uuidv4(),
+          quantity: draft.quantity ?? 1,
+          category: undefined,
+          expireDate,
           createdAt: now,
           updatedAt: now,
         };
@@ -142,9 +148,35 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       },
       updateInventoryItem(id, draft) {
         setInventory((items) =>
-          items.map((item) =>
-            item.id === id ? { ...item, ...draft, updatedAt: todayISO() } : item,
-          ),
+          items.map((item) => {
+            if (item.id !== id) return item;
+            const expireDate =
+              draft.shelfLifeDays !== undefined
+                ? addDaysToDateString(item.createdAt, draft.shelfLifeDays)
+                : draft.expireDate;
+
+            return {
+              ...item,
+              ...draft,
+              quantity: draft.quantity ?? 1,
+              category: undefined,
+              expireDate,
+              updatedAt: todayISO(),
+            };
+          }),
+        );
+      },
+      adjustInventoryQuantity(id, delta) {
+        setInventory((items) =>
+          items.map((item) => {
+            if (item.id !== id) return item;
+            const currentQuantity = item.quantity ?? 1;
+            return {
+              ...item,
+              quantity: Math.max(0, currentQuantity + delta),
+              updatedAt: todayISO(),
+            };
+          }),
         );
       },
       deleteInventoryItem(id) {
