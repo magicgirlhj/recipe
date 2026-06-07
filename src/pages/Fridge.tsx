@@ -13,13 +13,18 @@ import { daysUntil, expiryLabel, fullDate } from "../utils/date";
 
 const locations: InventoryLocation[] = ["fridge", "freezer", "pantry"];
 
+type InventoryDeleteRequest = {
+  item: InventoryItem;
+  reason: "delete" | "empty";
+};
+
 export function Fridge() {
   const { inventory, addInventoryItem, updateInventoryItem, adjustInventoryQuantity, deleteInventoryItem } = useKitchen();
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [deleting, setDeleting] = useState<InventoryItem | null>(null);
+  const [deleting, setDeleting] = useState<InventoryDeleteRequest | null>(null);
 
   const selectedItem = inventory.find((item) => item.id === selectedId) ?? null;
   const editingItem = inventory.find((item) => item.id === editingId) ?? null;
@@ -36,6 +41,16 @@ export function Fridge() {
     return days !== undefined && days <= 3;
   });
   const urgentIds = new Set(urgentItems.map((item) => item.id));
+
+  function handleDecrement(item: InventoryItem) {
+    const quantity = item.quantity ?? 1;
+    if (quantity <= 1) {
+      setDeleting({ item, reason: "empty" });
+      return;
+    }
+
+    adjustInventoryQuantity(item.id, -1);
+  }
 
   return (
     <div>
@@ -68,7 +83,7 @@ export function Fridge() {
                 key={item.id}
                 item={item}
                 onClick={() => setSelectedId(item.id)}
-                onDecrement={() => adjustInventoryQuantity(item.id, -1)}
+                onDecrement={() => handleDecrement(item)}
                 onIncrement={() => adjustInventoryQuantity(item.id, 1)}
               />
             ))}
@@ -90,7 +105,7 @@ export function Fridge() {
                       key={item.id}
                       item={item}
                       onClick={() => setSelectedId(item.id)}
-                      onDecrement={() => adjustInventoryQuantity(item.id, -1)}
+                      onDecrement={() => handleDecrement(item)}
                       onIncrement={() => adjustInventoryQuantity(item.id, 1)}
                     />
                   ))}
@@ -105,7 +120,11 @@ export function Fridge() {
 
       {selectedItem ? (
         <Modal title={selectedItem.name} onClose={() => setSelectedId(null)} widthClass="max-w-xl">
-          <InventoryDetail item={selectedItem} onEdit={() => setEditingId(selectedItem.id)} onDelete={() => setDeleting(selectedItem)} />
+          <InventoryDetail
+            item={selectedItem}
+            onEdit={() => setEditingId(selectedItem.id)}
+            onDelete={() => setDeleting({ item: selectedItem, reason: "delete" })}
+          />
         </Modal>
       ) : null}
 
@@ -137,13 +156,20 @@ export function Fridge() {
 
       {deleting ? (
         <ConfirmDialog
-          title="删除食材"
-          description={`确定删除「${deleting.name}」吗？`}
+          title={deleting.reason === "empty" ? "移除用完的食材" : "删除食材"}
+          description={
+            deleting.reason === "empty"
+              ? `「${deleting.item.name}」已经用完了吗？确认后会从冰箱里移除。`
+              : `确定删除「${deleting.item.name}」吗？`
+          }
+          confirmLabel={deleting.reason === "empty" ? "移除食材" : "确认删除"}
           onCancel={() => setDeleting(null)}
           onConfirm={() => {
-            deleteInventoryItem(deleting.id);
+            deleteInventoryItem(deleting.item.id);
             setDeleting(null);
-            setSelectedId(null);
+            if (selectedId === deleting.item.id) {
+              setSelectedId(null);
+            }
           }}
         />
       ) : null}

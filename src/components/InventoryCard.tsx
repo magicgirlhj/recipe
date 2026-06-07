@@ -76,8 +76,8 @@ export function InventoryCard({ item, onClick, onIncrement, onDecrement }: Inven
               event.stopPropagation();
               onDecrement?.();
             }}
-            disabled={quantity <= 0}
-            aria-label={`减少${item.name}数量`}
+            disabled={!onDecrement}
+            aria-label={quantity <= 1 ? `移除${item.name}` : `减少${item.name}数量`}
           >
             <Minus size={15} />
           </button>
