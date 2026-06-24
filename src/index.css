@@ -50,15 +50,15 @@ img {
   }
 
   .k-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition active:scale-[0.99];
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .k-button-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-kitchen-orange px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 active:scale-[0.99];
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-kitchen-orange px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .k-button-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-kitchen-ink transition hover:border-stone-300 hover:bg-stone-50 active:scale-[0.99];
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-kitchen-ink transition hover:border-stone-300 hover:bg-stone-50 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .k-button-ghost {
