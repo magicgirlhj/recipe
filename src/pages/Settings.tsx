@@ -9,7 +9,6 @@ import {
   LoaderCircle,
   LogIn,
   LogOut,
-  RotateCcw,
   Settings as SettingsIcon,
   UserPlus,
 } from "lucide-react";
@@ -18,7 +17,7 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 import { PageHeader } from "../components/PageHeader";
 import { useKitchen, type CloudSyncTone } from "../context/KitchenContext";
 
-type ConfirmAction = "upload" | "download" | "reset";
+type ConfirmAction = "upload" | "download";
 
 const statusStyles: Record<CloudSyncTone, string> = {
   local: "bg-stone-100 text-stone-700",
@@ -49,7 +48,6 @@ export function Settings() {
     signOutCloud,
     uploadLocalData,
     downloadCloudData,
-    resetDemoData,
   } = useKitchen();
   const [configDraft, setConfigDraft] = useState(cloudConfig);
   const [showConnection, setShowConnection] = useState(!cloudConfigured);
@@ -87,7 +85,6 @@ export function Settings() {
 
     if (action === "upload") await uploadLocalData();
     if (action === "download") await downloadCloudData();
-    if (action === "reset") resetDemoData();
   }
 
   const confirmCopy = {
@@ -100,11 +97,6 @@ export function Settings() {
       title: "下载云端数据",
       description: "这会使用云端版本覆盖当前设备里的菜谱、Wishlist 和冰箱数据。",
       label: "确认下载",
-    },
-    reset: {
-      title: "恢复示例数据",
-      description: "当前设备里的数据将恢复为初始示例；如果已登录，随后也会同步到云端。",
-      label: "确认恢复",
     },
   } satisfies Record<ConfirmAction, { title: string; description: string; label: string }>;
 
@@ -299,7 +291,7 @@ export function Settings() {
           </div>
         </section>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4">
           <section className="k-card p-5">
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-stone-100 text-stone-700">
               <SettingsIcon size={22} />
@@ -308,18 +300,6 @@ export function Settings() {
             <p className="mt-2 text-sm text-kitchen-muted">
               无论是否登录，数据都会保留在当前浏览器中。登录后会额外保存一份云端版本。
             </p>
-          </section>
-
-          <section className="k-card p-5">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-orange-100 text-orange-700">
-              <RotateCcw size={22} />
-            </div>
-            <h2 className="text-xl font-black">示例数据</h2>
-            <p className="mt-2 text-sm text-kitchen-muted">将菜谱、Wishlist 和冰箱恢复为初始示例。</p>
-            <button className="k-button-secondary mt-4 min-h-11" onClick={() => setConfirmAction("reset")}>
-              <RotateCcw size={16} />
-              恢复示例数据
-            </button>
           </section>
         </div>
       </div>

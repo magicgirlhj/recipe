@@ -55,7 +55,6 @@ interface KitchenContextValue {
   updateInventoryItem: (id: string, draft: InventoryDraft) => void;
   adjustInventoryQuantity: (id: string, delta: number) => void;
   deleteInventoryItem: (id: string) => void;
-  resetDemoData: () => void;
   configureCloud: (config: SupabaseConfig) => boolean;
   clearCloudConfiguration: () => void;
   signUpCloud: (email: string, password: string) => Promise<void>;
@@ -396,11 +395,6 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       },
       deleteInventoryItem(id) {
         setInventory((items) => items.filter((item) => item.id !== id));
-      },
-      resetDemoData() {
-        setRecipes(sampleRecipes);
-        setWishlist(sampleWishlist);
-        setInventory(sampleInventory);
       },
       configureCloud(config) {
         const normalized = normalizeSupabaseConfig(config);

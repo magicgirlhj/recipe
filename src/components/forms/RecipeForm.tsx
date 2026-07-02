@@ -1,6 +1,7 @@
-import { Plus, Trash2 } from "lucide-react";
+import { ClipboardPaste, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import type { Ingredient, Recipe, RecipeDifficulty, RecipeDraft } from "../../data/types";
+import { parseRecipeText, recipeImportTemplate } from "../../utils/recipeImport";
 
 interface RecipeFormProps {
   initial?: Recipe;
@@ -15,6 +16,11 @@ const splitTags = (value: string) =>
     .filter(Boolean);
 
 export function RecipeForm({ initial, onSubmit, onCancel }: RecipeFormProps) {
+  const [showImporter, setShowImporter] = useState(!initial);
+  const [importText, setImportText] = useState("");
+  const [importFeedback, setImportFeedback] = useState<{ tone: "success" | "warning" | "error"; text: string } | null>(
+    null,
+  );
   const [name, setName] = useState(initial?.name ?? "");
   const [image, setImage] = useState(initial?.image ?? "");
   const [tags, setTags] = useState(initial?.tags.join("，") ?? "");
@@ -51,8 +57,129 @@ export function RecipeForm({ initial, onSubmit, onCancel }: RecipeFormProps) {
     setIngredients((items) => items.map((item, itemIndex) => (itemIndex === index ? { ...item, ...value } : item)));
   };
 
+  function importRecipeText() {
+    if (!importText.trim()) {
+      setImportFeedback({ tone: "error", text: "先粘贴一段菜谱文本。" });
+      return;
+    }
+
+    const result = parseRecipeText(importText);
+    const parsed = result.recipe;
+    const importedParts: string[] = [];
+
+    if (parsed.name) {
+      setName(parsed.name);
+      importedParts.push("菜名");
+    }
+    if (parsed.image !== undefined) {
+      setImage(parsed.image);
+      importedParts.push("图片");
+    }
+    if (parsed.tags?.length) {
+      setTags(parsed.tags.join("，"));
+      importedParts.push("标签");
+    }
+    if (parsed.cookingMethod) {
+      setCookingMethod(parsed.cookingMethod);
+      importedParts.push("烹饪方式");
+    }
+    if (parsed.cookingTime !== undefined) {
+      setCookingTime(String(parsed.cookingTime));
+      importedParts.push("制作时间");
+    }
+    if (parsed.difficulty) {
+      setDifficulty(parsed.difficulty);
+      importedParts.push("难度");
+    }
+    if (parsed.ingredients?.length) {
+      setIngredients(parsed.ingredients);
+      importedParts.push(`${parsed.ingredients.length} 个食材`);
+    }
+    if (parsed.steps?.length) {
+      setSteps(parsed.steps);
+      importedParts.push(`${parsed.steps.length} 个步骤`);
+    }
+    if (parsed.notes !== undefined) {
+      setNotes(parsed.notes);
+      importedParts.push("备注");
+    }
+
+    if (!importedParts.length) {
+      setImportFeedback({ tone: "error", text: "没有识别到可导入的菜谱字段。" });
+      return;
+    }
+
+    setImportFeedback({
+      tone: result.warnings.length ? "warning" : "success",
+      text: result.warnings.length
+        ? `已填入 ${importedParts.join("、")}。${result.warnings.join(" ")}`
+        : `已填入 ${importedParts.join("、")}。`,
+    });
+  }
+
   return (
     <form className="space-y-5" onSubmit={submit}>
+      <section className="rounded-lg border border-orange-200 bg-orange-50/60 p-3">
+        <button
+          className="flex min-h-11 w-full items-center justify-between gap-3 text-left"
+          type="button"
+          onClick={() => setShowImporter((visible) => !visible)}
+          aria-expanded={showImporter}
+        >
+          <span className="flex items-center gap-2 font-black text-kitchen-ink">
+            <Sparkles className="text-kitchen-orange" size={18} />
+            AI 文本导入
+          </span>
+          <span className="text-sm font-bold text-kitchen-muted">{showImporter ? "收起" : "展开"}</span>
+        </button>
+
+        {showImporter ? (
+          <div className="mt-3 space-y-3">
+            <label className="block">
+              <span className="mb-1 block text-sm font-bold">粘贴菜谱文本</span>
+              <textarea
+                className="k-input min-h-52 font-mono text-xs leading-5"
+                value={importText}
+                onChange={(event) => {
+                  setImportText(event.target.value);
+                  setImportFeedback(null);
+                }}
+                placeholder={recipeImportTemplate}
+              />
+            </label>
+            {importFeedback ? (
+              <p
+                className={`rounded-lg px-3 py-2 text-sm font-semibold ${
+                  importFeedback.tone === "success"
+                    ? "bg-green-100 text-green-800"
+                    : importFeedback.tone === "warning"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-red-100 text-red-800"
+                }`}
+              >
+                {importFeedback.text}
+              </p>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <button className="k-button-primary min-h-11" type="button" onClick={importRecipeText}>
+                <ClipboardPaste size={17} />
+                识别并填入
+              </button>
+              <button
+                className="k-button-secondary min-h-11"
+                type="button"
+                onClick={() => {
+                  setImportText(recipeImportTemplate);
+                  setImportFeedback(null);
+                }}
+              >
+                填入示例
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </section>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block sm:col-span-2">
           <span className="mb-1 block text-sm font-bold">菜名</span>
