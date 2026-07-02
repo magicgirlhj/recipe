@@ -63,12 +63,14 @@ npm run preview
 4. 在 `Build and deployment` 中选择 `GitHub Actions`。
 5. 推送到 `main` 分支后，workflow 会自动构建并部署。
 
-如需开箱即用的云同步，在 GitHub Actions Repository secrets 中添加：
+如需让所有用户第一次打开网站时就自动带好 Supabase 连接，在 GitHub Actions `Repository secrets` 或 `Repository variables` 中添加：
 
 ```text
 SUPABASE_URL
 SUPABASE_PUBLISHABLE_KEY
 ```
+
+重新运行部署后，设置页会直接显示“已自动配置”，用户只需要登录或创建账号。
 
 完整数据库和认证配置见 [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)。
 
@@ -99,6 +101,7 @@ git push
 ```text
 .
 ├── .github/workflows/deploy.yml
+├── .env.example
 ├── supabase/setup.sql
 ├── SUPABASE_SETUP.md
 ├── index.html
@@ -150,6 +153,7 @@ git push
 ## 云同步说明
 
 - Supabase SDK 通过 CDN 加载，不需要在本地安装 Supabase npm 包。
+- 如果 GitHub Pages 构建时注入了 `SUPABASE_URL` 和 `SUPABASE_PUBLISHABLE_KEY`，设置页会自动填好连接信息。
 - 未配置或未登录时，所有功能仍可使用 localStorage。
 - 第一次登录且云端为空时，当前浏览器的数据会自动上传。
 - 云端已有数据时，新设备登录后会载入云端数据。

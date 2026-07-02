@@ -3,6 +3,8 @@ export interface SupabaseConfig {
   publishableKey: string;
 }
 
+export type SupabaseConfigSource = "embedded" | "manual" | "empty";
+
 export interface SupabaseUser {
   id: string;
   email?: string;
@@ -84,6 +86,7 @@ declare global {
 const configStorageKey = "my-kitchen:supabase-config";
 
 export const kitchenDataTable = "kitchen_data";
+const emptySupabaseConfig: SupabaseConfig = { url: "", publishableKey: "" };
 
 export function normalizeSupabaseConfig(config?: Partial<SupabaseConfig> | null): SupabaseConfig {
   return {
@@ -96,25 +99,54 @@ export function hasSupabaseConfig(config: SupabaseConfig) {
   return Boolean(config.url && config.publishableKey);
 }
 
-export function loadSupabaseConfig(): SupabaseConfig {
-  const embedded = normalizeSupabaseConfig(window.MY_KITCHEN_SUPABASE);
-  if (hasSupabaseConfig(embedded)) return embedded;
-
+function readStoredSupabaseConfig(): SupabaseConfig {
   try {
     const stored = localStorage.getItem(configStorageKey);
-    return stored ? normalizeSupabaseConfig(JSON.parse(stored) as Partial<SupabaseConfig>) : embedded;
+    return stored ? normalizeSupabaseConfig(JSON.parse(stored) as Partial<SupabaseConfig>) : emptySupabaseConfig;
   } catch {
+    return emptySupabaseConfig;
+  }
+}
+
+export function getEmbeddedSupabaseConfig(): SupabaseConfig {
+  return normalizeSupabaseConfig(window.MY_KITCHEN_SUPABASE);
+}
+
+export function getSupabaseConfigSource(config?: SupabaseConfig): SupabaseConfigSource {
+  const current = normalizeSupabaseConfig(config ?? loadSupabaseConfig());
+  const embedded = getEmbeddedSupabaseConfig();
+  if (
+    hasSupabaseConfig(embedded) &&
+    current.url === embedded.url &&
+    current.publishableKey === embedded.publishableKey
+  ) {
+    return "embedded";
+  }
+
+  return hasSupabaseConfig(current) ? "manual" : "empty";
+}
+
+export function loadSupabaseConfig(): SupabaseConfig {
+  const embedded = getEmbeddedSupabaseConfig();
+  if (hasSupabaseConfig(embedded)) {
+    saveSupabaseConfig(embedded);
     return embedded;
   }
+
+  return readStoredSupabaseConfig();
 }
 
 export function saveSupabaseConfig(config: SupabaseConfig) {
   const normalized = normalizeSupabaseConfig(config);
 
-  if (hasSupabaseConfig(normalized)) {
-    localStorage.setItem(configStorageKey, JSON.stringify(normalized));
-  } else {
-    localStorage.removeItem(configStorageKey);
+  try {
+    if (hasSupabaseConfig(normalized)) {
+      localStorage.setItem(configStorageKey, JSON.stringify(normalized));
+    } else {
+      localStorage.removeItem(configStorageKey);
+    }
+  } catch {
+    // localStorage may be unavailable in strict browser modes; cloud sync can still use embedded config.
   }
 
   return normalized;

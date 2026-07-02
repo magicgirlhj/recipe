@@ -37,6 +37,7 @@ function StatusIcon({ tone }: { tone: CloudSyncTone }) {
 export function Settings() {
   const {
     cloudConfig,
+    cloudConfigSource,
     cloudConfigured,
     cloudUser,
     cloudReady,
@@ -55,8 +56,12 @@ export function Settings() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const isAutoConfigured = cloudConfigSource === "embedded";
 
   useEffect(() => setConfigDraft(cloudConfig), [cloudConfig]);
+  useEffect(() => {
+    if (cloudConfigured) setShowConnection(false);
+  }, [cloudConfigured]);
 
   function saveConnection(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -117,7 +122,13 @@ export function Settings() {
               <div>
                 <h2 className="text-xl font-black">云端同步</h2>
                 <p className="mt-1 text-sm text-kitchen-muted">
-                  {cloudUser ? cloudUser.email : cloudConfigured ? "连接已配置，登录后开始同步。" : "当前仅保存在这台设备。"}
+                  {cloudUser
+                    ? cloudUser.email
+                    : isAutoConfigured
+                      ? "连接已由网站自动配置，登录后开始同步。"
+                      : cloudConfigured
+                        ? "连接已配置，登录后开始同步。"
+                        : "当前仅保存在这台设备。"}
                 </p>
               </div>
             </div>
@@ -163,6 +174,14 @@ export function Settings() {
               </div>
             ) : (
               <div>
+                {isAutoConfigured ? (
+                  <div className="mb-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                    <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
+                    <p>
+                      云同步连接已经内置到网站里。你只需要登录或创建账号，不同设备会使用同一套云端数据库。
+                    </p>
+                  </div>
+                ) : null}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block">
                     <span className="mb-1 block text-sm font-bold">邮箱</span>
@@ -220,6 +239,11 @@ export function Settings() {
 
             {showConnection ? (
               <form className="mt-3 grid gap-4 rounded-lg bg-stone-100 p-4" onSubmit={saveConnection}>
+                {isAutoConfigured ? (
+                  <div className="rounded-lg border border-green-200 bg-white p-3 text-sm text-green-800">
+                    这组连接来自网站部署配置，所有用户第一次打开都会自动带上，不需要手动保存。
+                  </div>
+                ) : null}
                 <label className="block">
                   <span className="mb-1 block text-sm font-bold">Supabase Project URL</span>
                   <input
@@ -228,6 +252,7 @@ export function Settings() {
                     value={configDraft.url}
                     onChange={(event) => setConfigDraft((config) => ({ ...config, url: event.target.value }))}
                     placeholder="https://xxxxx.supabase.co"
+                    readOnly={isAutoConfigured}
                     required
                   />
                 </label>
@@ -241,14 +266,22 @@ export function Settings() {
                       setConfigDraft((config) => ({ ...config, publishableKey: event.target.value }))
                     }
                     placeholder="sb_publishable_..."
+                    readOnly={isAutoConfigured}
                     required
                   />
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  <button className="k-button-primary min-h-11" type="submit">
-                    保存连接
-                  </button>
-                  {cloudConfigured ? (
+                  {isAutoConfigured ? (
+                    <button className="k-button-primary min-h-11" type="button" disabled>
+                      <CheckCircle2 size={17} />
+                      已自动配置
+                    </button>
+                  ) : (
+                    <button className="k-button-primary min-h-11" type="submit">
+                      保存连接
+                    </button>
+                  )}
+                  {cloudConfigured && !isAutoConfigured ? (
                     <button
                       className="k-button-secondary min-h-11 text-red-600 hover:bg-red-50"
                       type="button"

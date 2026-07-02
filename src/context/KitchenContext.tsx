@@ -11,6 +11,8 @@ import type {
 } from "../data/types";
 import {
   createSupabaseClient,
+  getEmbeddedSupabaseConfig,
+  getSupabaseConfigSource,
   hasSupabaseConfig,
   kitchenDataTable,
   loadSupabaseConfig,
@@ -18,6 +20,7 @@ import {
   saveSupabaseConfig,
   type CloudKitchenRow,
   type SupabaseConfig,
+  type SupabaseConfigSource,
   type SupabaseUser,
 } from "../lib/supabase";
 import { readCollection, storageKeys, writeCollection } from "../utils/storage";
@@ -35,6 +38,7 @@ interface KitchenContextValue {
   wishlist: WishlistItem[];
   inventory: InventoryItem[];
   cloudConfig: SupabaseConfig;
+  cloudConfigSource: SupabaseConfigSource;
   cloudConfigured: boolean;
   cloudUser: SupabaseUser | null;
   cloudReady: boolean;
@@ -100,6 +104,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
   );
   const cloudClient = cloudConnection.client;
   const cloudConfigured = hasSupabaseConfig(cloudConfig);
+  const cloudConfigSource = getSupabaseConfigSource(cloudConfig);
 
   useEffect(() => writeCollection(storageKeys.recipes, recipes), [recipes]);
   useEffect(() => writeCollection(storageKeys.wishlist, wishlist), [wishlist]);
@@ -258,6 +263,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       wishlist,
       inventory,
       cloudConfig,
+      cloudConfigSource,
       cloudConfigured,
       cloudUser,
       cloudReady,
@@ -412,11 +418,18 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       },
       clearCloudConfiguration() {
         if (cloudClient) void cloudClient.auth.signOut();
-        const emptyConfig = saveSupabaseConfig({ url: "", publishableKey: "" });
-        setCloudConfig(emptyConfig);
+        const embeddedConfig = getEmbeddedSupabaseConfig();
+        const nextConfig = hasSupabaseConfig(embeddedConfig)
+          ? saveSupabaseConfig(embeddedConfig)
+          : saveSupabaseConfig({ url: "", publishableKey: "" });
+        setCloudConfig(nextConfig);
         setCloudUser(null);
         setCloudReady(false);
-        setCloudStatus({ tone: "local", text: "云同步配置已清除，数据继续保存在本机。" });
+        setCloudStatus(
+          hasSupabaseConfig(embeddedConfig)
+            ? { tone: "pending", text: "已恢复网站内置连接，请登录账号。" }
+            : { tone: "local", text: "云同步配置已清除，数据继续保存在本机。" },
+        );
       },
       async signUpCloud(email, password) {
         if (!cloudClient) {
@@ -532,6 +545,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
     [
       cloudClient,
       cloudConfig,
+      cloudConfigSource,
       cloudConfigured,
       cloudReady,
       cloudStatus,
