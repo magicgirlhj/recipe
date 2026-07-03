@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 interface ModalProps {
   title: string;
@@ -9,11 +9,20 @@ interface ModalProps {
 }
 
 export function Modal({ title, children, onClose, widthClass = "max-w-3xl" }: ModalProps) {
+  const titleId = useId();
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-stone-950/35 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className={`max-h-[92vh] w-full overflow-y-auto rounded-t-lg bg-kitchen-paper shadow-2xl sm:rounded-lg ${widthClass}`}>
+      <div
+        className={`max-h-[92vh] w-full overflow-y-auto rounded-t-lg bg-kitchen-paper shadow-2xl sm:rounded-lg ${widthClass}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-stone-200 bg-kitchen-paper/95 px-5 py-4 backdrop-blur">
-          <h2 className="text-lg font-bold">{title}</h2>
+          <h2 className="text-lg font-bold" id={titleId}>
+            {title}
+          </h2>
           <button className="k-button-ghost h-9 w-9 p-0" onClick={onClose} aria-label="关闭">
             <X size={19} />
           </button>

@@ -1,4 +1,4 @@
-import { BookOpen, CalendarClock, ChefHat, Clock3, Flame, Plus, Search, Trash2, type LucideIcon } from "lucide-react";
+import { BookOpen, ChefHat, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EmptyState } from "../components/EmptyState";
@@ -96,7 +96,7 @@ export function Recipes() {
       )}
 
       {selectedRecipe ? (
-        <Modal title={selectedRecipe.name} onClose={() => setSelectedId(null)}>
+        <Modal title="菜谱详情" onClose={() => setSelectedId(null)} widthClass="max-w-5xl">
           <RecipeDetail
             recipe={selectedRecipe}
             onCooked={() => markCooked(selectedRecipe.id)}
@@ -159,80 +159,111 @@ function RecipeDetail({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const primaryTags = recipe.tags.slice(0, 3);
+  const tagLine = primaryTags.length ? primaryTags.join(" / ") : "我的菜谱";
+  const detailItems = [
+    recipe.cookingTime ? `${recipe.cookingTime} 分钟` : "未填写时间",
+    recipe.cookingMethod || "未填写方式",
+    recipe.difficulty ? difficultyLabel[recipe.difficulty] : "未填写难度",
+    `做过 ${recipe.cookedCount} 次`,
+    `最近 ${formatDate(recipe.lastCookedAt)}`,
+  ];
+
   return (
-    <div>
-      {recipe.image ? <img src={recipe.image} alt={recipe.name} className="mb-5 aspect-[16/9] w-full rounded-lg object-cover" /> : null}
-      <div className="mb-5 flex flex-wrap gap-1.5">
-        {recipe.tags.map((item) => (
-          <Tag key={item}>{item}</Tag>
-        ))}
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <DetailMetric icon={Clock3} label="制作时间" value={recipe.cookingTime ? `${recipe.cookingTime} 分钟` : "未填写"} />
-        <DetailMetric icon={Flame} label="烹饪方式" value={recipe.cookingMethod || "未填写"} />
-        <DetailMetric icon={ChefHat} label="难度" value={recipe.difficulty ? difficultyLabel[recipe.difficulty] : "未填写"} />
-        <DetailMetric icon={BookOpen} label="做过次数" value={`${recipe.cookedCount} 次`} />
-        <DetailMetric icon={CalendarClock} label="最近做过" value={formatDate(recipe.lastCookedAt)} />
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <section>
-          <h3 className="mb-3 font-black">食材</h3>
-          <div className="space-y-2">
-            {recipe.ingredients.map((ingredient, index) => (
-              <div className="flex justify-between rounded-lg bg-white px-3 py-2 text-sm" key={`${ingredient.name}-${index}`}>
-                <span className="font-semibold">{ingredient.name}</span>
-                <span className="text-kitchen-muted">{ingredient.amount}</span>
-              </div>
+    <div className="-m-5 bg-kitchen-paper px-5 pb-5 pt-4 sm:m-0 sm:bg-transparent sm:p-0">
+      <div className="mx-auto max-w-5xl">
+        <header className="border-b border-stone-200 pb-5 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-8">
+          <div>
+            <p className="text-sm font-bold text-kitchen-muted">{tagLine}</p>
+            <h2 className="mt-2 text-4xl font-black leading-none tracking-normal text-kitchen-ink sm:text-5xl lg:text-6xl">
+              {recipe.name}
+            </h2>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-1.5 lg:mt-0 lg:max-w-sm lg:justify-end">
+            {recipe.tags.map((item) => (
+              <Tag key={item}>{item}</Tag>
             ))}
           </div>
-        </section>
-        <section>
-          <h3 className="mb-3 font-black">步骤</h3>
-          <ol className="space-y-2">
-            {recipe.steps.map((step, index) => (
-              <li className="rounded-lg bg-white px-3 py-2 text-sm text-kitchen-muted" key={`${step}-${index}`}>
-                <span className="mr-2 font-black text-kitchen-orange">{index + 1}.</span>
-                {step}
-              </li>
-            ))}
-          </ol>
-        </section>
+        </header>
+
+        <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(260px,0.75fr)_minmax(0,1.25fr)] lg:gap-12">
+          <section className="lg:sticky lg:top-24 lg:self-start">
+            <div className="mb-4 flex items-end justify-between gap-4">
+              <h3 className="text-3xl font-black leading-none text-kitchen-ink">食材</h3>
+              <span className="text-sm font-bold text-kitchen-muted">{recipe.ingredients.length} 项</span>
+            </div>
+            <div className="divide-y divide-stone-200 border-y border-stone-200">
+              {recipe.ingredients.map((ingredient, index) => (
+                <div
+                  className="grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-3 text-base"
+                  key={`${ingredient.name}-${index}`}
+                >
+                  <span className="font-black text-kitchen-ink">{ingredient.name}</span>
+                  <span className="text-right text-sm font-bold text-kitchen-muted">{ingredient.amount || "适量"}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <div className="mb-4 flex items-end justify-between gap-4">
+              <h3 className="text-3xl font-black leading-none text-kitchen-ink">步骤</h3>
+              <span className="text-sm font-bold text-kitchen-muted">{recipe.steps.length} 步</span>
+            </div>
+            <ol className="space-y-5 border-y border-stone-200 py-5 lg:space-y-6">
+              {recipe.steps.map((step, index) => (
+                <li className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-4" key={`${step}-${index}`}>
+                  <span className="pt-1 text-sm font-black text-kitchen-orange">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <p className="m-0 text-base leading-7 text-kitchen-ink lg:text-lg lg:leading-8">{step}</p>
+                </li>
+              ))}
+            </ol>
+
+            {recipe.notes ? (
+              <section className="mt-6 border-b border-stone-200 pb-5">
+                <h3 className="text-xl font-black">备注</h3>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-kitchen-muted">{recipe.notes}</p>
+              </section>
+            ) : null}
+
+            {recipe.image ? (
+              <section className="mt-6 border-b border-stone-200 pb-5">
+                <h3 className="text-xl font-black">照片</h3>
+                <img
+                  src={recipe.image}
+                  alt={recipe.name}
+                  className="mt-3 aspect-[16/9] w-full rounded-lg object-cover lg:max-h-72"
+                />
+              </section>
+            ) : null}
+          </section>
+        </div>
+
+        <div className="mt-7 flex flex-wrap gap-x-3 gap-y-2 border-b border-stone-200 pb-5 text-xs font-black text-kitchen-muted">
+          {detailItems.map((item) => (
+            <span className="border-b border-stone-300 pb-1" key={item}>
+              {item}
+            </span>
+          ))}
+          <span className="border-b border-stone-300 pb-1">创建于 {fullDate(recipe.createdAt)}</span>
+        </div>
+
+        <div className="mt-6 grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
+          <button className="k-button-secondary min-h-11" onClick={onEdit}>
+            编辑
+          </button>
+          <button className="k-button-secondary min-h-11 text-red-600 hover:bg-red-50" onClick={onDelete}>
+            <Trash2 size={16} />
+            删除
+          </button>
+          <button className="k-button-primary min-h-11" onClick={onCooked}>
+            <ChefHat size={16} />
+            今天做了
+          </button>
+        </div>
       </div>
-
-      {recipe.notes ? (
-        <section className="mt-6 rounded-lg bg-white p-4">
-          <h3 className="font-black">备注</h3>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-kitchen-muted">{recipe.notes}</p>
-        </section>
-      ) : null}
-
-      <p className="mt-4 text-xs font-semibold text-kitchen-muted">创建于 {fullDate(recipe.createdAt)}</p>
-
-      <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-stone-200 pt-4">
-        <button className="k-button-secondary" onClick={onEdit}>
-          编辑
-        </button>
-        <button className="k-button-secondary text-red-600 hover:bg-red-50" onClick={onDelete}>
-          <Trash2 size={16} />
-          删除
-        </button>
-        <button className="k-button-primary" onClick={onCooked}>
-          <ChefHat size={16} />
-          今天做了
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function DetailMetric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
-  return (
-    <div className="rounded-lg bg-white p-3">
-      <Icon className="mb-2 text-kitchen-orange" size={18} />
-      <p className="text-xs font-semibold text-kitchen-muted">{label}</p>
-      <p className="mt-1 font-black">{value}</p>
     </div>
   );
 }
