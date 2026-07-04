@@ -1,4 +1,4 @@
-import { BookOpen, ChefHat, Plus, Search, Trash2 } from "lucide-react";
+import { BookOpen, ChefHat, ClipboardList, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EmptyState } from "../components/EmptyState";
@@ -7,6 +7,7 @@ import { PageHeader } from "../components/PageHeader";
 import { RecipeCard } from "../components/RecipeCard";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { Tag } from "../components/Tag";
+import { RecipeBatchImport } from "../components/forms/RecipeBatchImport";
 import { RecipeForm } from "../components/forms/RecipeForm";
 import { useKitchen } from "../context/KitchenContext";
 import type { Recipe } from "../data/types";
@@ -25,6 +26,7 @@ export function Recipes() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [batchImporting, setBatchImporting] = useState(false);
   const [deleting, setDeleting] = useState<Recipe | null>(null);
 
   const selectedRecipe = recipes.find((recipe) => recipe.id === selectedId) ?? null;
@@ -65,10 +67,16 @@ export function Recipes() {
       <PageHeader
         title="我的菜谱"
         actions={
-          <button className="k-button-primary" onClick={() => setCreating(true)}>
-            <Plus size={18} />
-            新建菜谱
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button className="k-button-secondary" onClick={() => setBatchImporting(true)}>
+              <ClipboardList size={18} />
+              批量导入
+            </button>
+            <button className="k-button-primary" onClick={() => setCreating(true)}>
+              <Plus size={18} />
+              新建菜谱
+            </button>
+          </div>
         }
       />
 
@@ -114,6 +122,26 @@ export function Recipes() {
               const recipe = addRecipe(draft);
               setCreating(false);
               setSelectedId(recipe.id);
+            }}
+          />
+        </Modal>
+      ) : null}
+
+      {batchImporting ? (
+        <Modal title="批量导入菜谱" onClose={() => setBatchImporting(false)} widthClass="max-w-5xl">
+          <RecipeBatchImport
+            existingRecipes={recipes}
+            onCancel={() => setBatchImporting(false)}
+            onImport={(drafts) => {
+              const createdRecipes: Recipe[] = [];
+              drafts
+                .slice()
+                .reverse()
+                .forEach((draft) => {
+                  createdRecipes.unshift(addRecipe(draft));
+                });
+              setBatchImporting(false);
+              if (createdRecipes[0]) setSelectedId(createdRecipes[0].id);
             }}
           />
         </Modal>

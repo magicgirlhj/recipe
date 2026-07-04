@@ -1,4 +1,4 @@
-import type { Ingredient, RecipeDifficulty } from "../data/types";
+import type { Ingredient, RecipeDifficulty, RecipeDraft } from "../data/types";
 
 export interface ParsedRecipeImport {
   name?: string;
@@ -14,6 +14,20 @@ export interface ParsedRecipeImport {
 
 export interface RecipeImportResult {
   recipe: ParsedRecipeImport;
+  warnings: string[];
+}
+
+export interface RecipeBatchImportItem {
+  index: number;
+  raw: string;
+  recipe: ParsedRecipeImport;
+  draft?: RecipeDraft;
+  warnings: string[];
+  errors: string[];
+}
+
+export interface RecipeBatchImportResult {
+  items: RecipeBatchImportItem[];
   warnings: string[];
 }
 
@@ -72,6 +86,45 @@ export const recipeImportTemplate = `菜名：番茄炒蛋
 3. 倒回鸡蛋，调味后翻炒均匀。
 备注：
 适合工作日快速做。`;
+
+export const recipeBatchImportTemplate = `# 番茄炒蛋
+
+标签：快手菜，中餐，晚餐
+烹饪方式：炒
+制作时间：15
+难度：简单
+
+食材：
+- 番茄：2个
+- 鸡蛋：3个
+- 盐：少许
+
+步骤：
+1. 番茄切块，鸡蛋打散。
+2. 先炒鸡蛋盛出，再炒番茄出汁。
+3. 倒回鸡蛋，调味后翻炒均匀。
+
+备注：
+适合工作日快速做。
+
+---
+
+# 鸡胸肉沙拉
+
+标签：减脂，高蛋白，快手菜
+烹饪方式：煎
+制作时间：20
+难度：简单
+
+食材：
+- 鸡胸肉：1块
+- 生菜：适量
+- 小番茄：6个
+
+步骤：
+1. 鸡胸肉加盐和黑胡椒腌 10 分钟。
+2. 平底锅煎熟后切片。
+3. 蔬菜洗净切好，和鸡胸肉混合。`;
 
 function normalizeLabel(label: string) {
   return label.trim().replace(/\s+/g, " ").toLowerCase();
@@ -158,7 +211,19 @@ export function parseRecipeText(text: string): RecipeImportResult {
 
       if (!firstContentLine) firstContentLine = line;
 
-      const fieldMatch = line.match(/^([^:：]{1,24})\s*[:：]\s*(.*)$/);
+      const normalizedLine = line
+        .replace(/^#{1,6}\s*/, "")
+        .replace(/^\*\*(.+?)\*\*$/, "$1")
+        .trim();
+      const headingFieldName = /^#{2,6}\s+\S/.test(line)
+        ? fieldAliases[normalizeLabel(normalizedLine.replace(/[:：]\s*$/, ""))]
+        : undefined;
+      if (headingFieldName && sectionNames.has(headingFieldName)) {
+        activeSection = headingFieldName as SectionName;
+        return;
+      }
+
+      const fieldMatch = normalizedLine.match(/^([^:：]{1,24})\s*[:：]\s*(.*)$/);
       const fieldName = fieldMatch ? fieldAliases[normalizeLabel(fieldMatch[1])] : undefined;
 
       if (fieldName) {
@@ -209,4 +274,100 @@ export function parseRecipeText(text: string): RecipeImportResult {
   if (!recipe.steps?.length) warnings.push("没有识别到步骤。");
 
   return { recipe, warnings };
+}
+
+function hasMeaningfulContent(lines: string[]) {
+  return lines.some((line) => line.trim() && !line.trim().match(/^[-*_]{3,}$/));
+}
+
+function splitRecipeMarkdownChunks(text: string) {
+  const chunks: string[] = [];
+  let current: string[] = [];
+
+  text
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .forEach((line) => {
+      const trimmed = line.trim();
+      const isSeparator = /^[-*_]{3,}$/.test(trimmed);
+      const isRecipeHeading = /^#\s+\S/.test(trimmed);
+
+      if (isSeparator) {
+        if (hasMeaningfulContent(current)) chunks.push(current.join("\n").trim());
+        current = [];
+        return;
+      }
+
+      if (isRecipeHeading && hasMeaningfulContent(current)) {
+        chunks.push(current.join("\n").trim());
+        current = [line];
+        return;
+      }
+
+      current.push(line);
+    });
+
+  if (hasMeaningfulContent(current)) chunks.push(current.join("\n").trim());
+
+  return chunks;
+}
+
+function parsedRecipeToDraft(recipe: ParsedRecipeImport): RecipeDraft | undefined {
+  const name = recipe.name?.trim();
+  if (!name) return undefined;
+
+  return {
+    name,
+    image: recipe.image?.trim() || undefined,
+    tags: recipe.tags ?? [],
+    ingredients: recipe.ingredients?.length ? recipe.ingredients : [{ name: "待补充" }],
+    steps: recipe.steps?.length ? recipe.steps : ["待补充做法"],
+    cookingMethod: recipe.cookingMethod?.trim() || undefined,
+    cookingTime: recipe.cookingTime,
+    difficulty: recipe.difficulty,
+    notes: recipe.notes?.trim() || undefined,
+  };
+}
+
+export function parseRecipeBatchMarkdown(text: string): RecipeBatchImportResult {
+  const chunks = splitRecipeMarkdownChunks(text);
+  const warnings: string[] = [];
+
+  if (!text.trim()) {
+    return { items: [], warnings: ["请先粘贴 Markdown 菜谱文本。"] };
+  }
+
+  if (!chunks.length) {
+    return { items: [], warnings: ["没有识别到菜谱内容。"] };
+  }
+
+  const items = chunks.map((chunk, chunkIndex) => {
+    const result = parseRecipeText(chunk);
+    const draft = parsedRecipeToDraft(result.recipe);
+    const errors: string[] = [];
+    const warningsForItem = [...result.warnings];
+
+    if (!draft) {
+      errors.push("缺少菜名，无法导入。");
+    }
+
+    if (draft && !result.recipe.ingredients?.length) {
+      warningsForItem.push("没有识别到食材，导入后会先填入「待补充」。");
+    }
+
+    if (draft && !result.recipe.steps?.length) {
+      warningsForItem.push("没有识别到步骤，导入后会先填入「待补充做法」。");
+    }
+
+    return {
+      index: chunkIndex + 1,
+      raw: chunk,
+      recipe: result.recipe,
+      draft,
+      warnings: Array.from(new Set(warningsForItem)),
+      errors,
+    };
+  });
+
+  return { items, warnings };
 }
