@@ -96,6 +96,8 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
     text: "当前数据仅保存在这台设备。",
   });
   const cloudSaveTimerRef = useRef<number | undefined>(undefined);
+  const cloudReadyRef = useRef(false);
+  const cloudUserIdRef = useRef<string | null>(null);
 
   const cloudConnection = useMemo(
     () => createSupabaseClient(cloudConfig),
@@ -108,6 +110,12 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
   useEffect(() => writeCollection(storageKeys.recipes, recipes), [recipes]);
   useEffect(() => writeCollection(storageKeys.wishlist, wishlist), [wishlist]);
   useEffect(() => writeCollection(storageKeys.inventory, inventory), [inventory]);
+  useEffect(() => {
+    cloudReadyRef.current = cloudReady;
+  }, [cloudReady]);
+  useEffect(() => {
+    cloudUserIdRef.current = cloudUser?.id ?? null;
+  }, [cloudUser?.id]);
 
   useEffect(() => {
     if (!cloudConfigured || !cloudClient) {
@@ -132,6 +140,7 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
       }
 
       const user = data?.session?.user ?? null;
+      cloudUserIdRef.current = user?.id ?? null;
       setCloudUser(user);
       setCloudStatus(
         user
@@ -143,7 +152,15 @@ export function KitchenProvider({ children }: { children: ReactNode }) {
     const { data } = cloudClient.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
       const user = session?.user ?? null;
+      const previousUserId = cloudUserIdRef.current;
+      const nextUserId = user?.id ?? null;
+      const isSameReadyUser = Boolean(nextUserId && previousUserId === nextUserId && cloudReadyRef.current);
+
+      cloudUserIdRef.current = nextUserId;
       setCloudUser(user);
+
+      if (isSameReadyUser) return;
+
       setCloudReady(false);
       setCloudStatus(
         user
