@@ -235,6 +235,11 @@ function RecipeDetail({
     return ingredient.amount ?? "";
   }
 
+  function startEditingAmount(ingredientIndex: number) {
+    const value = amountValue(ingredientIndex);
+    updateTemporaryAmount(ingredientIndex, value);
+  }
+
   return (
     <div className="-m-5 bg-kitchen-paper px-5 pb-5 pt-4 sm:m-0 sm:bg-transparent sm:p-0">
       <div className="mx-auto max-w-5xl">
@@ -257,7 +262,7 @@ function RecipeDetail({
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
                 <h3 className="text-3xl font-black leading-none text-kitchen-ink">食材</h3>
-                <p className="mt-2 text-xs font-bold text-kitchen-muted">临时换算，不保存原菜谱</p>
+                <p className="mt-2 text-xs font-bold text-kitchen-muted">点用量可临时换算，不保存原菜谱</p>
               </div>
               <span className="text-sm font-bold text-kitchen-muted">{recipe.ingredients.length} 项</span>
             </div>
@@ -293,13 +298,26 @@ function RecipeDetail({
                   key={`${ingredient.name}-${index}`}
                 >
                   <span className="font-black text-kitchen-ink">{ingredient.name}</span>
-                  <input
-                    aria-label={`临时修改${ingredient.name}用量`}
-                    className="k-input min-h-11 px-2 text-right text-sm font-bold"
-                    onChange={(event) => updateTemporaryAmount(index, event.target.value)}
-                    placeholder="适量"
-                    value={amountValue(index)}
-                  />
+                  {amountScale?.ingredientIndex === index ? (
+                    <input
+                      aria-label={`临时修改${ingredient.name}用量`}
+                      autoFocus
+                      className="k-input min-h-11 px-2 text-right text-sm font-bold"
+                      onChange={(event) => updateTemporaryAmount(index, event.target.value)}
+                      onFocus={(event) => event.currentTarget.select()}
+                      placeholder="适量"
+                      value={amountScale.value}
+                    />
+                  ) : (
+                    <button
+                      aria-label={`按${ingredient.name}用量临时换算`}
+                      className="min-h-11 rounded-lg px-2 text-right text-sm font-bold text-kitchen-muted transition hover:bg-stone-100 hover:text-kitchen-ink focus:outline-none focus:ring-2 focus:ring-orange-100 active:scale-[0.99]"
+                      type="button"
+                      onClick={() => startEditingAmount(index)}
+                    >
+                      {amountValue(index) || "适量"}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
