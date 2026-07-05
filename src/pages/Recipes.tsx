@@ -1,4 +1,4 @@
-import { BookOpen, ChefHat, ClipboardList, Plus, Search, Trash2 } from "lucide-react";
+import { BookOpen, ChefHat, ClipboardList, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EmptyState } from "../components/EmptyState";
@@ -11,6 +11,7 @@ import { RecipeBatchImport } from "../components/forms/RecipeBatchImport";
 import { RecipeForm } from "../components/forms/RecipeForm";
 import { useKitchen } from "../context/KitchenContext";
 import type { Recipe } from "../data/types";
+import { formatScaleRatio, parseScalableAmount, scaleAmount } from "../utils/amountScaling";
 import { formatDate, fullDate } from "../utils/date";
 
 const difficultyLabel = {
@@ -187,8 +188,22 @@ function RecipeDetail({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [amountScale, setAmountScale] = useState<{
+    ingredientIndex: number;
+    value: string;
+    ratio: number | null;
+  } | null>(null);
   const primaryTags = recipe.tags.slice(0, 3);
   const tagLine = primaryTags.length ? primaryTags.join(" / ") : "我的菜谱";
+  const originalAmounts = useMemo(
+    () => recipe.ingredients.map((ingredient) => parseScalableAmount(ingredient.amount)),
+    [recipe.ingredients],
+  );
+  const activeRatio = amountScale?.ratio ?? null;
+  const activeIngredient = amountScale ? recipe.ingredients[amountScale.ingredientIndex] : null;
+  const activeOriginalAmount = activeIngredient?.amount || "适量";
+  const hasActiveScale = activeRatio !== null && activeRatio > 0;
+  const hasInvalidScale = amountScale !== null && !hasActiveScale;
   const detailItems = [
     recipe.cookingTime ? `${recipe.cookingTime} 分钟` : "未填写时间",
     recipe.cookingMethod || "未填写方式",
@@ -196,6 +211,29 @@ function RecipeDetail({
     `做过 ${recipe.cookedCount} 次`,
     `最近 ${formatDate(recipe.lastCookedAt)}`,
   ];
+
+  useEffect(() => {
+    setAmountScale(null);
+  }, [recipe.id]);
+
+  function updateTemporaryAmount(ingredientIndex: number, value: string) {
+    const originalAmount = originalAmounts[ingredientIndex];
+    const nextAmount = parseScalableAmount(value);
+    const ratio = originalAmount && nextAmount ? nextAmount.value / originalAmount.value : null;
+
+    setAmountScale({
+      ingredientIndex,
+      value,
+      ratio: ratio && Number.isFinite(ratio) && ratio > 0 ? ratio : null,
+    });
+  }
+
+  function amountValue(ingredientIndex: number) {
+    const ingredient = recipe.ingredients[ingredientIndex];
+    if (amountScale?.ingredientIndex === ingredientIndex) return amountScale.value;
+    if (hasActiveScale) return scaleAmount(ingredient.amount, activeRatio);
+    return ingredient.amount ?? "";
+  }
 
   return (
     <div className="-m-5 bg-kitchen-paper px-5 pb-5 pt-4 sm:m-0 sm:bg-transparent sm:p-0">
@@ -217,17 +255,51 @@ function RecipeDetail({
         <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(260px,0.75fr)_minmax(0,1.25fr)] lg:gap-12">
           <section className="lg:sticky lg:top-24 lg:self-start">
             <div className="mb-4 flex items-end justify-between gap-4">
-              <h3 className="text-3xl font-black leading-none text-kitchen-ink">食材</h3>
+              <div>
+                <h3 className="text-3xl font-black leading-none text-kitchen-ink">食材</h3>
+                <p className="mt-2 text-xs font-bold text-kitchen-muted">临时换算，不保存原菜谱</p>
+              </div>
               <span className="text-sm font-bold text-kitchen-muted">{recipe.ingredients.length} 项</span>
             </div>
+            {hasActiveScale && activeIngredient ? (
+              <div className="mb-3 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-bold leading-6 text-orange-800">
+                    已按 {activeIngredient.name} 从 {activeOriginalAmount} 调整为 {amountScale?.value || "未填写"}，
+                    当前为 {formatScaleRatio(activeRatio)} 倍配方。
+                  </p>
+                  <button
+                    className="k-button-ghost h-9 shrink-0 px-2 text-orange-800 hover:bg-orange-100"
+                    type="button"
+                    onClick={() => setAmountScale(null)}
+                  >
+                    <RotateCcw size={15} />
+                    重置
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {hasInvalidScale && activeIngredient ? (
+              <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold leading-6 text-amber-800">
+                {activeIngredient.name} 的原用量或输入用量没有可识别数字，其他食材暂不换算。
+              </div>
+            ) : null}
             <div className="divide-y divide-stone-200 border-y border-stone-200">
               {recipe.ingredients.map((ingredient, index) => (
                 <div
-                  className="grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-3 text-base"
+                  className={`grid min-h-14 grid-cols-[minmax(0,1fr)_minmax(6.75rem,8.5rem)] items-center gap-3 py-3 text-base ${
+                    amountScale?.ingredientIndex === index ? "bg-orange-50/70 px-2" : ""
+                  }`}
                   key={`${ingredient.name}-${index}`}
                 >
                   <span className="font-black text-kitchen-ink">{ingredient.name}</span>
-                  <span className="text-right text-sm font-bold text-kitchen-muted">{ingredient.amount || "适量"}</span>
+                  <input
+                    aria-label={`临时修改${ingredient.name}用量`}
+                    className="k-input min-h-11 px-2 text-right text-sm font-bold"
+                    onChange={(event) => updateTemporaryAmount(index, event.target.value)}
+                    placeholder="适量"
+                    value={amountValue(index)}
+                  />
                 </div>
               ))}
             </div>
